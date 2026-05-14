@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>字在其中 · 体验版</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'PingFang SC','Microsoft YaHei','Noto Sans SC',sans-serif; background: #fdf6e3; color: #1a0a00; min-height: 100vh; }
+
+/* ── ONBOARDING ── */
+#onboard {
+  min-height: 100vh;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 30px 20px;
+  background: linear-gradient(135deg, #fdf6e3, #f5ead0);
+}
+.app-title { font-size: clamp(36px,10vw,64px); color: #c0392b; text-shadow: 3px 3px 0 rgba(201,150,42,0.2); letter-spacing: 8px; margin-bottom: 6px; }
+.app-sub { color: #8b6f5e; font-size: 13px; letter-spacing: 3px; margin-bottom: 40px; }
+
+.onboard-card {
+  background: white; border-radius: 24px; padding: 36px 32px;
+  width: 100%; max-width: 420px;
+  box-shadow: 0 4px 24px rgba(44,24,16,0.12);
+}
+.onboard-card h2 { font-size: 18px; color: #1a0a00; margin-bottom: 24px; letter-spacing: 1px; text-align: center; }
+.field { margin-bottom: 20px; }
+.field label { display: block; font-size: 11px; color: #8b6f5e; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+.field input { width: 100%; padding: 10px 14px; border: 1.5px solid #f5ead0; border-radius: 10px; font-size: 16px; font-family: inherit; background: #fdf6e3; color: #1a0a00; outline: none; transition: border-color .2s; }
+.field input:focus { border-color: #c0392b; }
+
+.level-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.level-btn {
+  padding: 12px 8px; border: 2px solid #f5ead0; border-radius: 12px;
+  background: white; cursor: pointer; text-align: center; transition: all .2s;
+}
+.level-btn:hover { border-color: #c0392b; background: #fdf6e3; }
+.level-btn.selected { border-color: #c0392b; background: rgba(192,57,43,0.06); }
+.level-emoji { font-size: 24px; margin-bottom: 4px; }
+.level-title { font-size: 13px; font-weight: 700; color: #1a0a00; margin-bottom: 2px; }
+.level-desc { font-size: 11px; color: #8b6f5e; }
+
+.start-btn {
+  width: 100%; padding: 13px; background: #c0392b; color: white;
+  border: none; border-radius: 12px; font-size: 16px; font-family: inherit;
+  cursor: pointer; letter-spacing: 2px; margin-top: 24px; transition: all .2s;
+}
+.start-btn:hover { background: #a93226; }
+.start-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+/* ── APP ── */
+#app { display: none; flex-direction: column; min-height: 100vh; }
+#app.show { display: flex; }
+
+.app-header {
+  background: white; border-bottom: 2px solid #f5ead0;
+  padding: 12px 20px; display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 40; box-shadow: 0 2px 10px rgba(44,24,16,0.1);
+}
+.header-left { display: flex; align-items: center; gap: 10px; }
+.header-name { font-weight: 700; font-size: 16px; color: #c0392b; }
+.header-level { font-size: 11px; color: #8b6f5e; }
+.session-badge { background: #fff3cd; border: 1px solid #f0c040; border-radius: 20px; padding: 3px 10px; font-size: 11px; color: #7d5a00; }
+.btn-small { background: none; border: 1px solid #f5ead0; border-radius: 8px; padding: 5px 10px; font-size: 12px; color: #8b6f5e; cursor: pointer; }
+.btn-small:hover { background: #f5ead0; }
+
+.nav-tabs { display: flex; gap: 4px; padding: 10px 16px; border-bottom: 1px solid #f5ead0; overflow-x: auto; }
+.nav-tab { padding: 7px 16px; border-radius: 20px; font-size: 13px; border: none; cursor: pointer; background: transparent; color: #8b6f5e; transition: all .2s; white-space: nowrap; }
+.nav-tab.active { background: #1a0a00; color: white; }
+
+.main { max-width: 760px; width: 100%; margin: 0 auto; padding: 20px 16px; }
+
+.controls-card { background: white; border-radius: 16px; padding: 18px; margin-bottom: 16px; box-shadow: 0 2px 12px rgba(44,24,16,0.08); }
+.controls-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+.ctrl-label { font-size: 10px; color: #8b6f5e; letter-spacing: 1px; margin-bottom: 4px; text-transform: uppercase; }
+.ctrl-select, .ctrl-input { width: 100%; padding: 8px 10px; border: 1.5px solid #f5ead0; border-radius: 10px; font-size: 13px; background: #fdf6e3; color: #1a0a00; font-family: inherit; }
+.gen-btn { padding: 9px 20px; background: #c0392b; color: white; border: none; border-radius: 12px; font-size: 14px; cursor: pointer; font-family: inherit; white-space: nowrap; align-self: flex-end; transition: all .2s; }
+.gen-btn:hover { background: #a93226; }
+.gen-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+.article-card { background: white; border-radius: 16px; padding: 24px 22px; box-shadow: 0 2px 12px rgba(44,24,16,0.08); }
+.article-title { text-align: center; font-size: 24px; color: #c0392b; letter-spacing: 4px; margin-bottom: 18px; }
+.article-body { font-size: 20px; line-height: 2.4; color: #1a0a00; letter-spacing: 0.5px; }
+.article-legend { margin-top: 14px; padding-top: 12px; border-top: 1px dashed #f5ead0; font-size: 11px; color: #b0977a; display: flex; gap: 12px; flex-wrap: wrap; }
+.zh { display: inline-block; cursor: pointer; border-radius: 3px; padding: 0 1px; transition: background .1s; }
+.zh:hover { background: rgba(201,150,42,0.15); }
+.zh.unknown { border-bottom: 2px dotted #c0392b; color: #c0392b; }
+
+.btn-done { width: 100%; margin-top: 12px; padding: 11px; background: #1a7a6e; color: white; border: none; border-radius: 12px; font-size: 14px; cursor: pointer; letter-spacing: 1px; }
+.btn-done:hover { background: #156057; }
+.done-msg { text-align: center; padding: 10px; font-size: 13px; color: #1a7a6e; margin-top: 8px; }
+
+.empty-state { text-align: center; padding: 60px 20px; color: #8b6f5e; }
+.empty-state .icon { font-size: 48px; margin-bottom: 14px; }
+.empty-state p { font-size: 16px; letter-spacing: 1px; margin-bottom: 8px; }
+.empty-state .hint { font-size: 13px; color: #b0977a; }
+
+.tooltip {
+  position: fixed; z-index: 999;
+  background: #2c1810; color: #fdf6e3;
+  padding: 14px 16px; border-radius: 14px; min-width: 155px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.35);
+}
+.tt-pinyin { font-size: 13px; color: #f0c040; margin-bottom: 2px; text-align: center; }
+.tt-char { font-size: 30px; font-weight: bold; text-align: center; margin-bottom: 2px; }
+.tt-status { font-size: 11px; color: #9a7060; text-align: center; margin-bottom: 10px; }
+.tt-btns { display: flex; gap: 6px; }
+.tt-btn { flex: 1; padding: 7px 4px; border: none; border-radius: 8px; font-size: 12px; cursor: pointer; }
+.tt-know { background: #27ae60; color: white; }
+.tt-unknown { background: #c0392b; color: white; }
+
+.vocab-section { margin-bottom: 26px; }
+.vocab-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.vocab-title { font-size: 16px; font-weight: 700; color: #1a0a00; letter-spacing: 1px; }
+.vocab-count { font-size: 12px; color: #8b6f5e; background: #f5ead0; padding: 2px 10px; border-radius: 10px; }
+.vocab-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 8px; }
+.vocab-card { border-radius: 12px; padding: 12px 6px; text-align: center; cursor: pointer; transition: transform .15s; }
+.vocab-card:hover { transform: scale(1.06); }
+.vocab-card.unknown { background: linear-gradient(135deg, #fde8e8, #f5b7b1); }
+.vocab-card.mastered { background: linear-gradient(135deg, #d5f4e6, #a8e6cf); }
+.vocab-char-big { font-size: 26px; margin-bottom: 2px; }
+.vocab-pinyin-sm { font-size: 11px; color: #555; }
+.vocab-empty { font-size: 13px; color: #b0977a; padding: 6px 0; }
+.vocab-tip { font-size: 11px; color: #b0977a; text-align: center; margin-top: 8px; }
+
+.history-item {
+  background: white; border-radius: 16px; padding: 16px 18px; margin-bottom: 12px;
+  cursor: pointer; box-shadow: 0 2px 10px rgba(44,24,16,0.08); transition: all .2s;
+}
+.history-item:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(44,24,16,0.12); }
+.history-item-title { font-size: 17px; color: #c0392b; font-weight: 700; letter-spacing: 2px; margin-bottom: 4px; }
+.history-item-meta { font-size: 12px; color: #8b6f5e; }
+
+.saving { position: fixed; bottom: 20px; right: 20px; background: #1a7a6e; color: white; padding: 8px 16px; border-radius: 20px; font-size: 12px; z-index: 100; opacity: 0; transition: opacity .3s; pointer-events: none; }
+.saving.show { opacity: 1; }
+
+@keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+.fade-up { animation: fadeUp .35s ease; }
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- ONBOARDING -->
+<div id="onboard">
+  <div class="app-title">字在其中</div>
+  <div class="app-sub">AI 中文阅读 · 体验版 ✨</div>
+  <div class="onboard-card">
+    <h2>开始之前，介绍一下自己 👋</h2>
+    <div class="field">
+      <label>孩子的名字</label>
+      <input type="text" id="kid-name" placeholder="比如：小明" maxlength="10"/>
+    </div>
+    <div class="field">
+      <label>中文认字水平</label>
+      <div class="level-grid">
+        <div class="level-btn" data-level="beginner" onclick="selectLevel(this)">
+          <div class="level-emoji">🌱</div>
+          <div class="level-title">初学</div>
+          <div class="level-desc">50字以下</div>
+        </div>
+        <div class="level-btn" data-level="elementary" onclick="selectLevel(this)">
+          <div class="level-emoji">🌿</div>
+          <div class="level-title">入门</div>
+          <div class="level-desc">约50-200字</div>
+        </div>
+        <div class="level-btn" data-level="intermediate" onclick="selectLevel(this)">
+          <div class="level-emoji">🌳</div>
+          <div class="level-title">进阶</div>
+          <div class="level-desc">约200-500字</div>
+        </div>
+        <div class="level-btn" data-level="advanced" onclick="selectLevel(this)">
+          <div class="level-emoji">🌲</div>
+          <div class="level-title">流利</div>
+          <div class="level-desc">500字以上</div>
+        </div>
+      </div>
+    </div>
+    <button class="start-btn" id="start-btn" onclick="startSession()" disabled>开始阅读 →</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="app-header">
+    <div class="header-left">
+      <div>
+        <div class="header-name" id="h-name"></div>
+        <div class="header-level" id="h-level"></div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span class="session-badge">⏱ 体验版</span>
+      <button class="btn-small" onclick="resetSession()">重新开始</button>
+    </div>
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" data-tab="read" onclick="switchTab('read')">📖 阅读</button>
+    <button class="nav-tab" data-tab="vocab" onclick="switchTab('vocab')">📝 生字本</button>
+    <button class="nav-tab" data-tab="history" onclick="switchTab('history')">📜 旧文章</button>
+  </div>
+  <div class="main">
+    <div id="tab-read">
+      <div class="controls-card">
+        <div class="controls-row">
+          <div style="flex:1;min-width:120px">
+            <div class="ctrl-label">主题</div>
+            <select class="ctrl-select" id="topic-mode" onchange="toggleTopicInput()">
+              <option value="auto">🎲 AI随机话题</option>
+              <option value="manual">✏️ 我来指定</option>
+            </select>
+          </div>
+          <div style="flex:2;min-width:140px;display:none" id="topic-input-wrap">
+            <div class="ctrl-label">话题内容</div>
+            <input class="ctrl-input" id="topic-input" placeholder="比如：小猫的冒险…"/>
+          </div>
+          <div style="flex:1;min-width:100px">
+            <div class="ctrl-label">长度</div>
+            <select class="ctrl-select" id="art-len">
+              <option value="short">短文 ~80字</option>
+              <option value="medium" selected>中篇 ~180字</option>
+              <option value="long">长文 ~320字</option>
+            </select>
+          </div>
+          <button class="gen-btn" id="gen-btn" onclick="generateArticle()">✦ 生成文章</button>
+        </div>
+      </div>
+      <div id="article-area">
+        <div class="empty-state fade-up">
+          <div class="icon">📚</div>
+          <p>还没有文章</p>
+          <div class="hint">点击上方按钮生成一篇吧！</div>
+        </div>
+      </div>
+    </div>
+    <div id="tab-vocab" style="display:none">
+      <div class="vocab-section">
+        <div class="vocab-header">
+          <div class="vocab-title">🔴 不认识</div>
+          <div class="vocab-count" id="cnt-unknown">0 个字</div>
+        </div>
+        <div class="vocab-grid" id="grid-unknown"></div>
+      </div>
+      <div class="vocab-section">
+        <div class="vocab-header">
+          <div class="vocab-title">🟢 认识</div>
+          <div class="vocab-count" id="cnt-mastered">0 个字</div>
+        </div>
+        <div class="vocab-grid" id="grid-mastered"></div>
+      </div>
+      <div class="vocab-tip">💡 点击字卡可以切换认识 / 不认识</div>
+    </div>
+    <div id="tab-history" style="display:none">
+      <div id="history-list"></div>
+    </div>
+  </div>
+</div>
+
+<div class="tooltip" id="tooltip" style="display:none">
+  <div class="tt-pinyin" id="tt-pinyin"></div>
+  <div class="tt-char" id="tt-char"></div>
+  <div class="tt-status" id="tt-status"></div>
+  <div class="tt-btns">
+    <button class="tt-btn tt-know" onclick="markChar('known')">✓ 认识</button>
+    <button class="tt-btn tt-unknown" onclick="markChar('unknown')">✗ 不认识</button>
+  </div>
+</div>
+
+<div class="saving" id="saving">已保存 ✓</div>
+
+<script>
+// ══════════════════════════════════
+// PINYIN DICT
+// ══════════════════════════════════
+const PINYIN = {
+  "的":"de","了":"le","是":"shì","在":"zài","我":"wǒ","你":"nǐ","他":"tā","她":"tā","它":"tā","们":"men",
+  "有":"yǒu","不":"bù","来":"lái","去":"qù","说":"shuō","这":"zhè","那":"nà","大":"dà","小":"xiǎo",
+  "人":"rén","上":"shàng","下":"xià","中":"zhōng","里":"lǐ","和":"hé","以":"yǐ","都":"dōu","个":"gè",
+  "会":"huì","能":"néng","要":"yào","可":"kě","一":"yī","年":"nián","月":"yuè","日":"rì","时":"shí",
+  "家":"jiā","国":"guó","学":"xué","校":"xiào","老":"lǎo","师":"shī","朋":"péng","友":"yǒu",
+  "父":"fù","母":"mǔ","水":"shuǐ","火":"huǒ","山":"shān","河":"hé","海":"hǎi","天":"tiān",
+  "地":"dì","风":"fēng","雨":"yǔ","花":"huā","草":"cǎo","树":"shù","书":"shū","读":"dú",
+  "写":"xiě","看":"kàn","听":"tīng","走":"zǒu","跑":"pǎo","飞":"fēi","春":"chūn","夏":"xià",
+  "秋":"qiū","冬":"dōng","今":"jīn","明":"míng","心":"xīn","手":"shǒu","爱":"ài","美":"měi",
+  "好":"hǎo","真":"zhēn","故":"gù","事":"shì","字":"zì","很":"hěn","已":"yǐ","经":"jīng",
+  "也":"yě","猫":"māo","狗":"gǒu","鸟":"niǎo","鱼":"yú","爸":"bà","妈":"mā","哥":"gē",
+  "姐":"jiě","弟":"dì","妹":"mèi","红":"hóng","白":"bái","黑":"hēi","门":"mén","路":"lù",
+  "车":"chē","电":"diàn","话":"huà","想":"xiǎng","知":"zhī","道":"dào","感":"gǎn","情":"qíng",
+  "快":"kuài","慢":"màn","高":"gāo","低":"dī","多":"duō","少":"shǎo","长":"cháng","短":"duǎn",
+  "新":"xīn","难":"nán","体":"tǐ","开":"kāi","关":"guān","进":"jìn","出":"chū","前":"qián",
+  "后":"hòu","左":"zuǒ","右":"yòu","问":"wèn","答":"dá","笑":"xiào","哭":"kū","唱":"chàng",
+  "跳":"tiào","游":"yóu","吃":"chī","喝":"hē","睡":"shuì","起":"qǐ","坐":"zuò","站":"zhàn",
+  "找":"zhǎo","帮":"bāng","回":"huí","叫":"jiào","请":"qǐng","谢":"xiè","对":"duì","错":"cuò",
+  "热":"rè","冷":"lěng","暖":"nuǎn","亮":"liàng","远":"yuǎn","近":"jìn","重":"zhòng","轻":"qīng",
+  "甜":"tián","苦":"kǔ","二":"èr","三":"sān","四":"sì","五":"wǔ","六":"liù","七":"qī",
+  "八":"bā","九":"jiǔ","十":"shí","百":"bǎi","千":"qiān","万":"wàn","同":"tóng","木":"mù",
+  "土":"tǔ","金":"jīn","而":"ér","但":"dàn","因":"yīn","所":"suǒ","如":"rú","就":"jiù",
+  "为":"wèi","或":"huò","及":"jí","虽":"suī","然":"rán","果":"guǒ","么":"me","只":"zhǐ",
+  "特":"tè","别":"bié","常":"cháng","非":"fēi","还":"hái","又":"yòu","生":"shēng","活":"huó",
+  "工":"gōng","作":"zuò","用":"yòng","行":"xíng","自":"zì","意":"yì","思":"sī","方":"fāng",
+  "面":"miàn","每":"měi","些":"xiē","样":"yàng","比":"bǐ","像":"xiàng","更":"gèng","着":"zhe",
+  "过":"guò","把":"bǎ","被":"bèi","从":"cóng","到":"dào","向":"xiàng","再":"zài","力":"lì",
+  "气":"qì","太":"tài","半":"bàn","全":"quán","各":"gè","没":"méi","吗":"ma","呢":"ne",
+  "吧":"ba","啊":"a","哦":"ó","哇":"wā","玩":"wán","买":"mǎi","送":"sòng","画":"huà",
+  "告":"gào","诉":"sù","做":"zuò","动":"dòng","黄":"huáng","蓝":"lán","绿":"lǜ","紫":"zǐ",
+  "粉":"fěn","灰":"huī","银":"yín","云":"yún","星":"xīng","光":"guāng","夜":"yè","早":"zǎo",
+  "晚":"wǎn","雪":"xuě","冰":"bīng","石":"shí","湖":"hú","江":"jiāng","林":"lín","鸡":"jī",
+  "鸭":"yā","牛":"niú","马":"mǎ","羊":"yáng","猪":"zhū","兔":"tù","虎":"hǔ","龙":"lóng",
+  "熊":"xióng","爷":"yé","奶":"nǎi","叔":"shū","阿":"ā","姨":"yí","定":"dìng","名":"míng",
+  "最":"zuì","欢":"huān","豆":"dòu","等":"děng","得":"de","己":"jǐ","暗":"àn","两":"liǎng",
+  "边":"biān","东":"dōng","西":"xī","主":"zhǔ","露":"lù","眼":"yǎn","睛":"jīng","觉":"jué",
+  "忍":"rěn","住":"zhù","发":"fā","现":"xiàn","摇":"yáo","尾":"wěi","点":"diǎn","捉":"zhuō",
+  "迷":"mí","藏":"cáng","悄":"qiāo","躲":"duǒ","床":"chuáng","底":"dǐ","种":"zhǒng","班":"bān",
+  "群":"qún","结":"jié","队":"duì","肺":"fèi","呼":"hū","吸":"xī","食":"shí","物":"wù",
+  "科":"kē","跃":"yuè","落":"luò","微":"wēi","池":"chí","塘":"táng","青":"qīng","蛙":"wā",
+  "荷":"hé","叶":"yè","蜻":"qīng","蜓":"tíng","翅":"chì","膀":"bǎng","溅":"jiàn","网":"wǎng",
+  "兜":"dōu","抓":"zhuā","蝌":"kē","蚪":"dǒu","养":"yǎng","柳":"liǔ","扇":"shàn","摇":"yáo",
+  "岸":"àn","奶":"nǎi","讲":"jiǎng","微":"wēi","岁":"suì","身":"shēn","舞":"wǔ","鲜":"xiān",
+  "海":"hǎi","豚":"tún","聪":"cōng","专":"zhuān","属":"shǔ","危":"wēi","险":"xiǎn","浪":"làng"
+};
+
+// ══════════════════════════════════
+// LEVEL CONFIG
+// ══════════════════════════════════
+const LEVELS = {
+  beginner: {
+    label:"初学 (50字以下)",
+    len_override:"short",
+    prompt: (topic, unknown) => `你是儿童中文老师，给完全初学的孩子（只认识约50个最基础的字）写一篇极简短文。
+要求：
+1. ${topic}
+2. 长度：30-50个字
+3. 每句只有2-5个字，像儿歌一样
+4. 只用最最基础的字：一二三四五六七八九十上下大小多少人口手足日月水火山猫狗鱼鸟爸妈哥姐来去吃喝玩看好不是有
+5. 绝对不要用生僻字或复杂句式
+6. 融入这些生字：${unknown||"无"}
+7. 第一行标题（2-3个字），空一行写正文
+直接输出，不要说明。标题每次不同。`
+  },
+  elementary: {
+    label:"入门 (50-200字)",
+    prompt: (topic, unknown) => `你是儿童中文老师，给中文入门孩子（认识约50-200个字）写一篇简单短文。
+要求：
+1. ${topic}
+2. 长度：约80-100个字
+3. 句子简短（每句5-10个字），词汇基础常见
+4. 不要用复杂词语，以简单动词和名词为主
+5. 融入这些生字：${unknown||"无"}
+6. 有简单情节，让孩子容易理解
+7. 第一行标题（3-5个字），空一行写正文
+直接输出，不要说明。标题每次不同有创意。`
+  },
+  intermediate: {
+    label:"进阶 (200-500字)",
+    prompt: (topic, unknown) => `你是儿童中文老师，给中文进阶孩子（认识约200-500个字）写一篇短文。
+要求：
+1. ${topic}
+2. 长度：约150-200个字
+3. 句子可以稍长，有简单的复句和转折
+4. 词汇较丰富，可以用一些形容词和副词
+5. 融入这些生字：${unknown||"无"}
+6. 有完整情节，生动有趣
+7. 第一行标题（4-6个字），空一行写正文
+直接输出，不要说明。标题每次不同有创意。`
+  },
+  advanced: {
+    label:"流利 (500字以上)",
+    prompt: (topic, unknown) => `你是儿童中文老师，给中文流利的孩子（认识500字以上）写一篇短文。
+要求：
+1. ${topic}
+2. 长度：约250-300个字
+3. 句式多样，可用复句、转折、因果等
+4. 词汇丰富，可适当用成语或四字词语
+5. 融入这些生字：${unknown||"无"}
+6. 情节丰富，有描写和对话
+7. 第一行标题（4-6个字），空一行写正文
+直接输出，不要说明。标题每次不同有创意。`
+  }
+};
+
+// ══════════════════════════════════
+// SESSION STATE (no persistence)
+// ══════════════════════════════════
+let session = null; // { name, level, unknownChars, masteredChars, articleHistory }
+let activeChar = null;
+let articleSaved = false;
+let currentArticle = null;
+
+// ══════════════════════════════════
+// ONBOARDING
+// ══════════════════════════════════
+let selectedLevel = null;
+
+document.getElementById('kid-name').addEventListener('input', checkReady);
+
+function selectLevel(el) {
+  document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedLevel = el.dataset.level;
+  checkReady();
+}
+
+function checkReady() {
+  const name = document.getElementById('kid-name').value.trim();
+  document.getElementById('start-btn').disabled = !(name && selectedLevel);
+}
+
+function startSession() {
+  const name = document.getElementById('kid-name').value.trim();
+  if (!name || !selectedLevel) return;
+  session = { name, level: selectedLevel, unknownChars: {}, masteredChars: {}, articleHistory: [] };
+  const lvl = LEVELS[selectedLevel];
+  document.getElementById('h-name').textContent = name;
+  document.getElementById('h-level').textContent = lvl.label;
+  document.getElementById('onboard').style.display = 'none';
+  document.getElementById('app').classList.add('show');
+  switchTab('read');
+}
+
+function resetSession() {
+  if (!confirm('确定要重新开始吗？本次的生字和文章记录会清空。')) return;
+  session = null; selectedLevel = null; currentArticle = null; articleSaved = false;
+  document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('kid-name').value = '';
+  document.getElementById('start-btn').disabled = true;
+  document.getElementById('app').classList.remove('show');
+  document.getElementById('onboard').style.display = 'flex';
+  document.getElementById('article-area').innerHTML = `<div class="empty-state fade-up"><div class="icon">📚</div><p>还没有文章</p><div class="hint">点击上方按钮生成一篇吧！</div></div>`;
+}
+
+// ══════════════════════════════════
+// TABS
+// ══════════════════════════════════
+function switchTab(tab) {
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+  ['read','vocab','history'].forEach(t => {
+    document.getElementById('tab-'+t).style.display = t===tab ? 'block' : 'none';
+  });
+  if (tab==='vocab') renderVocab();
+  if (tab==='history') renderHistory();
+}
+
+function toggleTopicInput() {
+  const mode = document.getElementById('topic-mode').value;
+  document.getElementById('topic-input-wrap').style.display = mode==='manual' ? 'block' : 'none';
+}
+
+// ══════════════════════════════════
+// GENERATE ARTICLE
+// ══════════════════════════════════
+async function generateArticle() {
+  if (!session) return;
+  const btn = document.getElementById('gen-btn');
+  btn.disabled = true; btn.textContent = '✦ 写作中…';
+
+  const lvl = LEVELS[session.level];
+  const mode = document.getElementById('topic-mode').value;
+  const topic = document.getElementById('topic-input').value.trim();
+  const len = lvl.len_override || document.getElementById('art-len').value;
+  const lenMap = { short:'约80字', medium:'约180字', long:'约320字' };
+
+  const unknownList = Object.keys(session.unknownChars).sort(()=>Math.random()-0.5).slice(0,5).join('、');
+  const topicLine = mode==='manual' && topic ? '话题：'+topic : '自选有趣贴近儿童生活的话题（动物冒险、季节、友情、魔法、美食，每次不同）';
+  const prompt = lvl.prompt(topicLine, unknownList);
+
+  document.getElementById('article-area').innerHTML = `
+    <div style="text-align:center;padding:60px 20px;color:#8b6f5e">
+      <div style="font-size:40px;margin-bottom:12px;display:inline-block;animation:spin 1.5s linear infinite">🖌️</div>
+      <div style="font-size:16px;letter-spacing:2px">正在为你写一篇专属文章…</div>
+    </div>`;
+
+  try {
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
+    });
+    const data = await res.json();
+    const text = data.text || '';
+    const lines = text.trim().split('\n').filter(l => l.trim());
+    const title = lines[0] || '有趣的故事';
+    const body = lines.slice(1).join('\n').trim() || text;
+    currentArticle = { title, body };
+    articleSaved = false;
+    renderArticle(title, body);
+  } catch(e) {
+    document.getElementById('article-area').innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><p>生成失败，请再试</p></div>`;
+  }
+  btn.disabled = false; btn.textContent = '✦ 生成文章';
+}
+
+// ══════════════════════════════════
+// RENDER ARTICLE
+// ══════════════════════════════════
+function renderArticle(title, body) {
+  const isCN = c => /[\u4e00-\u9fff]/.test(c);
+  let html = '';
+  for (const char of body) {
+    if (!isCN(char)) { html += char==='\n' ? '<br>' : char; continue; }
+    const isU = !!session.unknownChars[char];
+    html += `<span class="zh${isU?' unknown':''}" onclick="charClick(this,'${char}')">${char}</span>`;
+  }
+  document.getElementById('article-area').innerHTML = `
+    <div style="font-size:12px;color:#b0977a;text-align:center;margin-bottom:8px">👆 点击任意汉字查看拼音</div>
+    <div class="article-card fade-up">
+      <div class="article-title">${title}</div>
+      <div class="article-body">${html}</div>
+    </div>
+    <button class="btn-done" onclick="saveArticle()">✓ 我读完了，保存记录</button>`;
+}
+
+function saveArticle() {
+  if (articleSaved || !currentArticle) return;
+  session.articleHistory.unshift({
+    title: currentArticle.title,
+    body: currentArticle.body,
+    date: new Date().toLocaleDateString('zh-CN'),
+    charCount: currentArticle.body.length
+  });
+  articleSaved = true;
+  document.querySelector('.btn-done').outerHTML = '<div class="done-msg">✅ 已保存到旧文章！</div>';
+}
+
+// ══════════════════════════════════
+// TOOLTIP
+// ══════════════════════════════════
+async function charClick(el, char) {
+  activeChar = { char, el };
+  let pinyin = PINYIN[char];
+  if (!pinyin) {
+    document.getElementById('tt-pinyin').textContent = '…';
+    document.getElementById('tt-char').textContent = char;
+    document.getElementById('tt-status').textContent = '';
+    showTooltip(el);
+    try {
+      const res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: `汉字"${char}"的拼音是什么？只返回拼音，不要其他内容。`, max_tokens: 50 })
+      });
+      const data = await res.json();
+      pinyin = data.text?.trim() || '···';
+      PINYIN[char] = pinyin;
+    } catch(e) { pinyin = '···'; }
+  }
+  const isU = !!session.unknownChars[char];
+  document.getElementById('tt-pinyin').textContent = pinyin;
+  document.getElementById('tt-char').textContent = char;
+  document.getElementById('tt-status').textContent = isU ? '📌 不认识' : '✅ 认识';
+  showTooltip(el);
+}
+
+function showTooltip(el) {
+  const tt = document.getElementById('tooltip');
+  tt.style.display = 'block';
+  const rect = el.getBoundingClientRect();
+  const top = Math.max(10, rect.top - 130);
+  const left = Math.min(window.innerWidth - 165, Math.max(10, rect.left - 55));
+  tt.style.top = top + 'px'; tt.style.left = left + 'px';
+}
+
+function markChar(status) {
+  if (!activeChar || !session) return;
+  const { char, el } = activeChar;
+  const pinyin = PINYIN[char] || '···';
+  if (status === 'known') {
+    session.masteredChars[char] = { pinyin };
+    delete session.unknownChars[char];
+    document.querySelectorAll('.zh').forEach(e => { if (e.textContent===char) e.classList.remove('unknown'); });
+  } else {
+    session.unknownChars[char] = { pinyin };
+    delete session.masteredChars[char];
+    document.querySelectorAll('.zh').forEach(e => { if (e.textContent===char) e.classList.add('unknown'); });
+  }
+  hideTooltip();
+  if (document.getElementById('tab-vocab').style.display !== 'none') renderVocab();
+}
+
+function hideTooltip() {
+  document.getElementById('tooltip').style.display = 'none';
+  activeChar = null;
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#tooltip') && !e.target.classList.contains('zh')) hideTooltip();
+});
+
+// ══════════════════════════════════
+// VOCAB
+// ══════════════════════════════════
+function renderVocab() {
+  if (!session) return;
+  const unknown = Object.entries(session.unknownChars);
+  const mastered = Object.entries(session.masteredChars);
+  document.getElementById('cnt-unknown').textContent = unknown.length + ' 个字';
+  document.getElementById('cnt-mastered').textContent = mastered.length + ' 个字';
+
+  const makeCard = ([c, d], type) => `
+    <div class="vocab-card ${type}" onclick="toggleVocab('${c}','${type}')">
+      <div class="vocab-char-big">${c}</div>
+      <div class="vocab-pinyin-sm">${d.pinyin||PINYIN[c]||'···'}</div>
+    </div>`;
+
+  document.getElementById('grid-unknown').innerHTML = unknown.length
+    ? unknown.map(e => makeCard(e,'unknown')).join('')
+    : '<div class="vocab-empty">暂无生字 👍</div>';
+  document.getElementById('grid-mastered').innerHTML = mastered.length
+    ? mastered.map(e => makeCard(e,'mastered')).join('')
+    : '<div class="vocab-empty">阅读时点击汉字标记</div>';
+}
+
+function toggleVocab(char, type) {
+  activeChar = { char, el: null };
+  markChar(type === 'mastered' ? 'unknown' : 'known');
+  renderVocab();
+}
+
+// ══════════════════════════════════
+// HISTORY
+// ══════════════════════════════════
+function renderHistory() {
+  if (!session) return;
+  const hist = session.articleHistory.filter(h => h.body);
+  const area = document.getElementById('history-list');
+  if (!hist.length) {
+    area.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>还没有阅读记录</p></div>';
+    return;
+  }
+  area.innerHTML = hist.map((h, i) => `
+    <div class="history-item" onclick="loadHistory(${i})">
+      <div class="history-item-title">${h.title}</div>
+      <div class="history-item-meta">${h.date} · 约${h.charCount}字</div>
+    </div>`).join('');
+}
+
+function loadHistory(idx) {
+  const h = session.articleHistory.filter(x => x.body)[idx];
+  if (!h) return;
+  currentArticle = h;
+  articleSaved = true;
+  switchTab('read');
+  renderArticle(h.title, h.body);
+  document.querySelector('.btn-done')?.remove();
+}
+</script>
+</body>
+</html>
